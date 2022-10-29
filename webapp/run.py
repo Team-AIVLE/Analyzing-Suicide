@@ -13,11 +13,11 @@ from datetime import date, datetime, timedelta
 from db_handler import dbHandler, locDBHandler
 from extract_noun import get_nouns
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 app.config['UPLOAD_FOLDER'] = "static"
 
 DATA_DIR = pjoin("static", "data")
-CONFIG_PATH = "config/config.json"
+CONFIG_PATH = "config/"
 loc_db = locDBHandler(CONFIG_PATH, DATA_DIR)
 
 # Remove Cache
@@ -33,15 +33,23 @@ def nocache(view):
   return update_wrapper(no_cache, view)
 
 
-@app.route('/')
-@nocache
+@app.route('/', methods=['GET', 'POST'])
 def root():
     # Count
     data_len = load_data()
     set_region()
     
-    
     return render_template("index.html", data_len=data_len)
+
+
+@app.route('/charts', methods=['GET', 'POST'])
+def charts():
+    return render_template("charts.html")
+
+
+@app.route('/tables', methods=['GET', 'POST'])
+def tables():
+    return render_template("tables.html")
 
 
 def load_data():
@@ -51,6 +59,7 @@ def load_data():
     if cur_dt - last_dt >= timedelta(hours=1):
         length = loc_db.update_dataset()
     
+    print(length)
     return length
     
 
@@ -121,5 +130,8 @@ def get_data_len_by_region():
     
     
 if __name__ == '__main__':
-  app.run(debug=True)
+    app.run(debug=True, 
+         host='0.0.0.0', 
+         port=5000, 
+         threaded=True)
   
