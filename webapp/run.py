@@ -13,7 +13,11 @@ from datetime import date, datetime, timedelta
 from db_handler import locDBHandler
 from graph import build_highlighted_graph
 from extract_noun import get_nouns
-
+from typing import List
+from functools import reduce
+from collections import Counter, OrderedDict
+import numpy as np
+from ast import literal_eval
 app = Flask(__name__, template_folder='templates')
 app.config['UPLOAD_FOLDER'] = "static"
 
@@ -78,23 +82,27 @@ def set_region():
     return
 
 def load_keyword():
-    keywords = {
-        "ㄷㅂㅈㅅ" : 3333,
-        "ㅈㅅㅇ" : 3145,
-        "ㅂㄱㅌ" : 1564,
-        "ㅊㅅㄱㄹ" : 1450,
-        "끈" : 667,
-        "ㅁㅌ" : 99,
-        "청주" : 10
-    }
+    temp = pd.read_csv(pjoin("static/data", "221027-0000_528.csv"), converters={
+        "noum" : literal_eval
+    })
+    
+    # loc_db.cur_df['noum'] = loc_db.cur_df['noum'].apply(lambda x: literal_eval(x))
+    keywords = temp['noum'].tolist()
+    keywords = reduce(lambda x, y: x + y, keywords)
+    #print(keywords)
+    
+    keywords = Counter(keywords)
+    x=OrderedDict(keywords.most_common())
+    keywords=dict(x)
+    
     return keywords
 
 @app.route('/api/keyword_weights', methods=['GET'])
 def get_keyword_weights():
     keywords = load_keyword()
     
-    labels = list(map(lambda x: x[0], keywords.items()))
-    weight = [16.5, 15.5, 15, 14.5, 9.67, 6.9, 5]
+    labels = [k for k in keywords.keys()]
+    weight = [k for k in keywords.values()]
     words = [{"key" : l, "weight" : w} for l, w in zip(labels, weight)]
     
     return jsonify({'words': words})
@@ -103,8 +111,8 @@ def get_keyword_weights():
 @app.route('/api/keyword_counts', methods=['GET'])
 def get_keyword_counts():
     keywords = load_keyword()
-    labels = list(map(lambda x: x[0], keywords.items()))
-    values = list(map(lambda x: x[-1], keywords.items()))
+    labels = [k for k in keywords.keys()][0:10]
+    values = [k for k in keywords.values()][0:10]
     
     max_values = (max(values) // 1000 + 1) * 1000
     return jsonify({'labels': labels, 'values' : values, 'max_values' : max_values})

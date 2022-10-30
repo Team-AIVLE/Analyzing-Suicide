@@ -2,24 +2,27 @@ import os
 import json
 import pandas as pd
 import firebase_admin
-
+from typing import List
 from glob import iglob
 from os.path import join as pjoin
 from datetime import date, datetime
 from firebase_admin import credentials, db
 
+import numpy as np
+from ast import literal_eval
+from extract_noun import get_nouns
+
 class dbHandler:
-    def __init__(self, config_dir, local_dir):
+    def __init__(self, config_path, local_path):
         
-        with open(pjoin(config_dir, "config.json")) as f:
-            config = json.load(f)
+        with open(config_path) as f:
+            self.config = json.load(f)
         try:
             # Firebase database 인증 및 앱 초기화
-            config_keyfile = pjoin(config_dir, config['keyfile'])
-            self.local_dir = local_dir
-            self.cred = credentials.Certificate(config_keyfile)
+            self.local_path = local_path
+            self.cred = credentials.Certificate(self.config['keyfile'])
             firebase_admin.initialize_app(self.cred,{
-                'databaseURL': config['database_url']
+                'databaseURL': self.config['database_url']
             })
             self.dir = db.reference()
         except Exception as e:
@@ -50,18 +53,28 @@ class dbHandler:
             data_df['id'] = indices
             data_df['nickname'] = nicknames
             data_df['text'] = contents
-            data_df['keyword'] = keywords
+            data_df['search_keyword'] = keywords
             data_df['url'] = urls
             data_df['timestamps'] = pd.to_datetime(timestamps)
-            
             
             data_df['date'] = data_df['timestamps'].apply(lambda x: x.date)
             data_df['time'] = data_df['timestamps'].apply(lambda x: x.time().strftime('%H:%M:%S'))
             
+            keywords=data_df['search_keyword'].value_counts()
+            keywords=keywords.astype(np.int32)
+            keywords=dict(keywords)
+            keywords={k:int(v) for k,v in keywords.items()}
+            text = data_df['text'].values
+            morp = []
+            for i in range(len(data_df)):
+                morp.append(get_nouns(text[i]))
+            
+            data_df['noum'] = morp
+            
             
             df_len = len(data_df)
             
-            data_df.to_csv(pjoin(self.local_dir, f"{date.today().strftime('%y%m%d-%H%M')}_{df_len}.csv"), index=False)
+            data_df.to_csv(pjoin(self.local_path, f"{date.today().strftime('%y%m%d-%H%M')}_{df_len}.csv"), index=False)
             return len(data_df)
         
         except (Exception) as e:
@@ -70,17 +83,21 @@ class dbHandler:
 
     def close(self):
         pass
+
              
 class locDBHandler:
-    def __init__(self, config_path, local_dir):
-        self.local_dir = local_dir
+    def __init__(self, config_path, local_path):
+        self.local_path = local_path
         self.cur_path = self.get_lastest_path()
-        self.cur_df = pd.read_csv(self.cur_path)
+        self.cur_df = pd.read_csv(self.cur_path, converters={
+            "noum" : literal_eval
+        })
+        assert isinstance(self.cur_df.iloc[0]['noum'], List)
         
-        self.db = dbHandler(config_path, local_dir)
+        self.db = dbHandler(config_path, local_path)
 
     def get_lastest_path(self):
-        return list(iglob(pjoin(self.local_dir, "*.csv")))[-1]
+        return list(iglob(pjoin(self.local_path, "*.csv")))[-1]
     
     def get_updated_time(self):
         last_dt = self.cur_path.split(os.sep)[-1].split("_")[0]
