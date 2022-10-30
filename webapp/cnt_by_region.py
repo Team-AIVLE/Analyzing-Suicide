@@ -40,7 +40,7 @@ def get_cnt_by_region(data):
     data_with_region = get_data_by_region(proc_data)
 
     x_ticks = data_with_region[['date']].drop_duplicates(ignore_index=True)['date'].tolist()
-    regions = data_with_region['region'].unique()
+    regions = data_with_region['region'].unique().tolist()
     
     date_df = pd.DataFrame(x_ticks, columns=['date'])
     counts = []
