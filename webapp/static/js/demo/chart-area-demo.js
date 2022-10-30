@@ -26,13 +26,6 @@ function number_format(number, decimals, dec_point, thousands_sep) {
   }
   return s.join(dec);
 }
-
-var colors = ["rgba(246, 25, 25, 0.63)", "rgba(241, 101, 21, 0.63)", "rgba(255, 186, 54, 0.63)", "rgba(131, 255, 54, 0.86)",
-            "rgba(54, 255, 123, 0.78)", "rgba(65, 222, 185, 0.93)", "rgba(65, 187, 222, 0.93)", "rgba(65, 148, 222, 0.93)", 
-            "rgba(65, 119, 222, 0.93)", "rgba(65, 76, 222, 0.93)", "rgba(116, 65, 222, 0.93)", "rgba(184, 65, 222, 0.93)",
-            "rgba(241, 102, 236, 0.93)", "rgba(255, 135, 216, 0.93)", "rgba(165, 40, 40, 0.93)", "rgba(165, 104, 40, 0.93)", 
-            "rgba(165, 133, 40, 0.93)", "rgba(161, 165, 40, 0.93)", "rgba(107, 165, 40, 0.93)", "rgba(40, 165, 101, 0.93)"]
-
 $.ajax({
   type: 'GET',
   url: "api/data_len_by_region",
@@ -42,6 +35,7 @@ $.ajax({
     var regions = data['regions'];
     var x_ticks = data['x_ticks'];
     var counts = data['counts'];
+    var colors = data['colors'];
     var dataset = [];
 
     var ctx = document.getElementById("myAreaChart");

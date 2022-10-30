@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from glob import iglob
 from os.path import join as pjoin
 
@@ -20,14 +21,17 @@ from functools import reduce
 from collections import Counter, OrderedDict
 from ast import literal_eval
 from log import Logger
+from word_embedding import WordModel
+
+
 
 app = Flask(__name__, template_folder='templates')
 app.config['UPLOAD_FOLDER'] = "static"
 
 DATA_DIR = pjoin("static", "data")
+MODEL_DIR = pjoin("static", "model")
 CONFIG_PATH = "config/"
 loc_db = locDBHandler(CONFIG_PATH, DATA_DIR)
-
 
 logger = Logger('api-log', './log/')
 
@@ -47,9 +51,8 @@ def nocache(view):
 @app.route('/', methods=['GET', 'POST'])
 def root():
     # Count
-    data_len = load_data()
-    set_region()
-    
+    data_len = load_data()  
+        
     return render_template("index.html", data_len=data_len)
 
 
@@ -74,29 +77,15 @@ def load_data():
     return length
     
 
-def get_region(text):
-    return None
-
-def set_region():
-    if 'region' in loc_db.cur_df.columns: return
-    
-    regions = []
-    for i, d in loc_db.cur_df.iterrows():
-        regions += [get_region(d['text'])]
-    
-    loc_db.add_column(col_name="region", values=regions)
-    return
-
 def load_keyword():
-    temp = pd.read_csv(pjoin("static/data", "221027-0000_528.csv"), converters={
+    temp = pd.read_csv(pjoin(DATA_DIR, "221027-0000_528.csv"), converters={
         "noum" : literal_eval
     })
     keywords = temp['noum'].tolist()
     keywords = reduce(lambda x, y: x + y, keywords)
     
     keywords = Counter(keywords)
-    x=OrderedDict(keywords.most_common())
-    keywords=dict(x)
+    keywords = dict(OrderedDict(keywords.most_common()))
     
     return keywords
 
@@ -121,16 +110,23 @@ def get_keyword_counts():
     return jsonify({'labels': labels, 'values' : values, 'max_values' : max_values})
 
 
-
 def load_data_with_related_keyword():
-    data = pd.DataFrame()
-    data['category'] = ['동반자 모집', '구체적 정보 제공', '구체적 정보 제공']
-    data['id'] = [0, 1, 2]
-
-    data['word'] = ['ㄷㅂㅈㅅ','ㅊㅅㄱㄹ', '끈' ]
-    data['neighbors'] = [['여성', '끈'],['약물', '모텔'], ['도박']]
+    word_model = WordModel(data=loc_db.cur_df, model_dir=MODEL_DIR)
     
+    data = pd.DataFrame()
+    data['category'] = ['동반자 모집', '판매/활용', '구체적 정보 제공', '판매/활용', '판매/활용']
+    data['id'] = [0, 1, 2, 3, 4]
+
+    data['word'] = ['ㄷㅂㅈㅅ','ㅈㅍㄷ', 'ㅂㄱㅌ','ㅅㅁㅈ','ㅅㅌㄴㅅ' ]
+    data['neighbors'] = [word_model.get_similar_words('ㄷㅂㅈㅅ'),
+                         word_model.get_similar_words('ㅈㅍㄷ'),
+                         word_model.get_similar_words('ㅂㄱㅌ'),
+                         word_model.get_similar_words('ㅅㅁㅈ'),
+                         word_model.get_similar_words('ㅅㅌㄴㅅ')
+                         ]
     return data
+
+
 
 @app.route('/api/data_len_by_region', methods=['GET'])
 def get_data_len_by_region():
@@ -140,43 +136,20 @@ def get_data_len_by_region():
         regions (list): 지역
         counts (list): 지역별 유해 게시물 발생 횟수
     """
-    # 유해게시물 많이 발생하는 지역 순으로, 20개 지역만 반환
-    
-    x_ticks = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    regions = ["대전", "청주", "공주"]
-    counts = [[0, 0, 1, 4, 6, 11, 15, 20, 11, 9, 5, 8],
-              [10, 15, 10, 5, 5, 3, 2, 24, 19, 18, 15, 9],
-              [0, 1, 1, 2, 1, 1, 3, 2, 1, 4, 5, 11]]
-
     x_ticks, regions, counts = get_cnt_by_region(loc_db.cur_df)
-    print(len(x_ticks), len(counts[0]), len(counts), len(regions))    
-    print(regions, len(regions), type(regions))    
-    regions = ['부산', '서울', '울산', '대전', '경기', '강원', '전남', '전북', '충북', '경남', '제주', '충남', '대구']
-    counts = [[1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 2.0, 6.0, 2.0, 8.0, 1.0, 1.0], 
-     [0.0, 4.0, 0.0, 1.0, 1.0, 0.0, 0.0, 5.0, 1.0, 3.0, 1.0, 4.0], 
-     [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 0.0, 0.0, 3.0, 1.0], 
-     [0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 5.0, 23.0], 
-     [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 2.0, 5.0, 4.0, 5.0, 0.0, 6.0], 
-     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 1.0, 2.0, 0.0, 2.0], 
-     [0.0, 0.0,0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0], 
-     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 4.0, 3.0, 4.0, 1.0], 
-     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 5.0, 0.0, 1.0], 
-     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 4.0, 0.0, 1.0, 0.0], 
-     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0], 
-     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 4.0], 
-     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 1.0, 1.0]]
     
-    # logger.debug(x_ticks)
-
-
-    return jsonify({'x_ticks': x_ticks, 'regions' : regions, 'counts' : counts})
+    
+    palette = sns.color_palette("crest", as_cmap=False, n_colors=len(regions))
+    colors = list(palette.as_hex())
+    
+    return jsonify({'x_ticks': x_ticks, 'regions' : regions, 'counts' : counts, 'colors' : colors})
 
 @app.route('/api/related_sale', methods=['GET'])
 def get_related_words_with_sale():
     
     data = load_data_with_related_keyword()
     
-    nodes, edges = build_highlighted_graph(data, keywords=['ㅊㅅㄱㄹ'], logger=logger)
+    nodes, edges = build_highlighted_graph(data, keywords=['ㅈㅍㄷ', 'ㅅㅁㅈ', 'ㅅㅌㄴㅅ'], logger=logger)    
     return jsonify({'nodes': nodes, 'edges' : edges})
 
 
@@ -185,7 +158,7 @@ def get_related_words_with_info():
     
     data = load_data_with_related_keyword()
     
-    nodes, edges = build_highlighted_graph(data, keywords=['끈'], logger=logger)
+    nodes, edges = build_highlighted_graph(data, keywords=['ㅂㄱㅌ'], logger=logger)
     return jsonify({'nodes': nodes, 'edges' : edges})
 
 
