@@ -464,7 +464,6 @@
 
                     <div class="row">
 
-                        <!-- Pie Chart -->
                         <div class="col-xl-6 col-lg-6">
                             <div class="card shadow mb-4">
                                 <!-- Card Header - Dropdown -->
@@ -548,42 +547,26 @@
 
                                 </div>
                             </div>
+                            
                         </div>
-
-                        
-                        
-
-                        <!-- Area Chart -->
                         <div class="col-xl-6 col-lg-6">
+
+                            <!-- Bar Chart -->
                             <div class="card shadow mb-4">
-                                <!-- Card Header - Dropdown -->
-
-                                <div
-                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">지역별 유해 게시물 발생 현황</h6>
-                                    <div class="dropdown no-arrow">
-                                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="bi bi-plus-circle"></i>
-
-                                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                                            aria-labelledby="dropdownMenuLink">
-                                            <a class="dropdown-item" href="#">더보기</a>
-                                        </div>
-                                    </div>
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">지역별 유해 게시물 집계 현황</h6>
+                                    
                                 </div>
-                                <!-- Card Body -->
+                                
                                 <div class="card-body">
-                                    <div class="chart-area">
-                                        <canvas id="myAreaChart"></canvas>
+                                    <div class="chart-bar">
+                                        <canvas id="region_BarChart" labels="{{ labels }}" values="{{ values }}"></canvas>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        
+
                     </div>
 
                     
@@ -632,7 +615,7 @@
     <script src="{{ url_for('static', filename='vendor/chart.js/Chart.min.js') }}"></script>
 
     <!-- Page level custom scripts -->
-    <script src="{{ url_for('static', filename='js/demo/chart-area-demo.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/demo/chart-bar-region.js') }}"></script>
     <script src="{{ url_for('static', filename='js/demo/chart-bar-demo.js') }}"></script>
     <script src="{{ url_for('static', filename='js/demo/chart-sale-demo.js') }}"></script>
     <script src="{{ url_for('static', filename='js/demo/chart-info-demo.js') }}"></script>

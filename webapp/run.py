@@ -1,5 +1,3 @@
-import os
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from glob import iglob
@@ -10,20 +8,17 @@ from io import BytesIO, StringIO
 from flask import Flask, send_file, render_template, make_response
 from flask import jsonify, request
 
-from functools import wraps, update_wrapper
-from datetime import date, datetime, timedelta
+from ast import literal_eval
+from functools import wraps, update_wrapper, reduce
+from datetime import datetime, timedelta
+from collections import Counter, OrderedDict
+
+from log import Logger
+from utilities.colors import get_palette
 from db_handler import locDBHandler
 from graph import build_highlighted_graph
-from cnt_by_region import get_cnt_by_region
-from extract_noun import get_nouns
-from typing import List
-from functools import reduce
-from collections import Counter, OrderedDict
-from ast import literal_eval
-from log import Logger
+from cnt_by_region import get_cnt_by_region, get_total_cnt_by_region
 from word_embedding import WordModel
-
-
 
 app = Flask(__name__, template_folder='templates')
 app.config['UPLOAD_FOLDER'] = "static"
@@ -107,7 +102,33 @@ def get_keyword_counts():
     values = [k for k in keywords.values()][0:10]
     
     max_values = (max(values) // 100 + 1) * 100
-    return jsonify({'labels': labels, 'values' : values, 'max_values' : max_values})
+    colors = get_palette(n_colors=len(labels))
+    
+    return jsonify({'labels': labels, 'values' : values, 'max_values' : max_values, 'colors' : colors})
+
+
+@app.route('/api/keyword_counts_by_region', methods=['GET'])
+def get_keyword_counts_by_region():
+    labels, values = get_total_cnt_by_region(loc_db.cur_df)
+    
+    max_values = (max(values) // 10 + 1) * 10
+    colors = get_palette(n_colors=len(labels), palette="viridis")
+    
+    return jsonify({'labels': labels, 'values' : values, 'max_values' : max_values, 'colors' : colors})
+
+
+@app.route('/api/data_len_by_region', methods=['GET'])
+def get_data_len_by_region():
+    """지역별 유해게시물 발생 통계
+    Returns:
+        x_ticks (list): 시간 x축
+        regions (list): 지역
+        counts (list): 지역별 유해 게시물 발생 횟수
+    """
+    x_ticks, regions, counts = get_cnt_by_region(loc_db.cur_df)
+    colors = get_palette(n_colors=len(regions))
+    
+    return jsonify({'x_ticks': x_ticks, 'regions' : regions, 'counts' : counts, 'colors' : colors})
 
 
 def load_data_with_related_keyword():
@@ -125,24 +146,6 @@ def load_data_with_related_keyword():
                          word_model.get_similar_words('ㅅㅌㄴㅅ')
                          ]
     return data
-
-
-
-@app.route('/api/data_len_by_region', methods=['GET'])
-def get_data_len_by_region():
-    """지역별 유해게시물 발생 통계
-    Returns:
-        x_ticks (list): 시간 x축
-        regions (list): 지역
-        counts (list): 지역별 유해 게시물 발생 횟수
-    """
-    x_ticks, regions, counts = get_cnt_by_region(loc_db.cur_df)
-    
-    
-    palette = sns.color_palette("crest", as_cmap=False, n_colors=len(regions))
-    colors = list(palette.as_hex())
-    
-    return jsonify({'x_ticks': x_ticks, 'regions' : regions, 'counts' : counts, 'colors' : colors})
 
 @app.route('/api/related_sale', methods=['GET'])
 def get_related_words_with_sale():

@@ -1,7 +1,11 @@
 import re
 import numpy as np
 import pandas as pd
+
 from region import REGION
+from os.path import join as pjoin
+
+DATA_PATH = pjoin("static/data/region", "data_by_region.csv")
 
 def get_regexp(cities):
     return f"({'|'.join(cities)})"
@@ -35,9 +39,13 @@ def date_to_string(x):
     return f"{x.year}"[-2:] + f"-%02d" % (x.month)
     
 def get_cnt_by_region(data):
-    print("get_cnt_by_region ", len(data))
-    proc_data = preprocessing(data)
-    data_with_region = get_data_by_region(proc_data)
+    try:
+        data_with_region = pd.read_csv(DATA_PATH) 
+        data_with_region['date'] = pd.to_datetime(data_with_region['date'], format="%Y-%m-%d")
+    except:
+        proc_data = preprocessing(data)
+        data_with_region = get_data_by_region(proc_data)
+        data_with_region.to_csv(DATA_PATH, index=False)
 
     x_ticks = data_with_region[['date']].drop_duplicates(ignore_index=True)['date'].tolist()
     regions = data_with_region['region'].unique().tolist()
@@ -52,3 +60,18 @@ def get_cnt_by_region(data):
 
     assert len(x_ticks) == len(counts[0]) and len(regions) == len(counts)        
     return list(map(date_to_string, x_ticks)), regions, counts
+
+def get_total_cnt_by_region(data):
+    try:
+        data_with_region = pd.read_csv(DATA_PATH)
+        data_with_region['date'] = pd.to_datetime(data_with_region['date'], format="%Y-%m-%d")      
+    except:
+        proc_data = preprocessing(data)
+        data_with_region = get_data_by_region(proc_data)
+        data_with_region.to_csv(DATA_PATH, index=False)
+
+    regions = data_with_region['region'].unique().tolist()
+    result = data_with_region.groupby(by=['region'], as_index=False).sum()[['region', 'text']]
+    result.sort_values(by=['text'], inplace=True, ascending=False)
+    
+    return result['region'].tolist(), result['text'].tolist()

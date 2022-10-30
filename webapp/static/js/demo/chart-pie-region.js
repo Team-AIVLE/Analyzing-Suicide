@@ -3,10 +3,10 @@ Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,Bli
 Chart.defaults.global.defaultFontColor = '#858796';
 
 
-// 키워드별 발생 비율 
+// 지역별 유해게시물 발생 비율 
 $.ajax({
   type: 'GET',
-  url: "/api/keyword_counts",
+  url: "/api/keyword_counts_by_region",
   data: {},
   dataType: 'json',
   success: function (data){
@@ -14,7 +14,7 @@ $.ajax({
       var values = data['values'];
       var colors = data['colors'];
 
-      var ctx = document.getElementById("PieChart");
+      var ctx = document.getElementById("region_PieChart");
       var myPieChart = new Chart(ctx, {
         type: 'doughnut',
         data: {

@@ -26,42 +26,29 @@ function number_format(number, decimals, dec_point, thousands_sep) {
   }
   return s.join(dec);
 }
+
 $.ajax({
   type: 'GET',
-  url: "api/data_len_by_region",
+  url: "api/keyword_counts_by_region",
   data: {},
   dataType: 'json',
   success: function (data) {
-    var regions = data['regions'];
-    var x_ticks = data['x_ticks'];
-    var counts = data['counts'];
-    var colors = data['colors'];
-    var dataset = [];
+    var labels = data['labels'];
+    var values = data['values'];
+    var max_val = data['max_values'];
 
-    var ctx = document.getElementById("region_LineChart");
-    for(i = 0; i < regions.length; i ++){
-      dataset.push({
-        label: regions[i],
-        lineTension: 0.3,
-        backgroundColor: "#00ff0000",
-        borderColor: colors[i],
-        pointRadius: 3,
-        pointBackgroundColor: colors[i],
-        pointBorderColor: colors[i],
-        pointHoverRadius: 3,
-        pointHoverBackgroundColor: colors[i],
-        pointHoverBorderColor: colors[i],
-        pointHitRadius: 10,
-        pointBorderWidth: 2,
-        data: counts[i],
-        });
-    }
-  
-    var myLineChart = new Chart(ctx, {
-      type: 'line',
+    var ctx = document.getElementById("region_BarChart");
+    var myBarChart = new Chart(ctx, {
+      type: 'bar',
       data: {
-        labels: x_ticks,
-        datasets: dataset
+        labels: labels,
+        datasets: [{
+          label: "Count",
+          backgroundColor: "#4e73df",
+          hoverBackgroundColor: "#2e59d9",
+          borderColor: "#4e73df",
+          data: values,
+        }],
       },
       options: {
         maintainAspectRatio: false,
@@ -75,22 +62,21 @@ $.ajax({
         },
         scales: {
           xAxes: [{
-            time: {
-              unit: 'date'
-            },
             gridLines: {
               display: false,
               drawBorder: false
             },
             ticks: {
-              maxTicksLimit: 7
-            }
+              maxTicksLimit: labels.length
+            },
+            maxBarThickness: 25,
           }],
           yAxes: [{
             ticks: {
+              min: 0,
+              max: max_val,
               maxTicksLimit: 5,
               padding: 10,
-              // Include a dollar sign in the ticks
               callback: function(value, index, values) {
                 return number_format(value);
               }
@@ -108,30 +94,30 @@ $.ajax({
           display: false
         },
         tooltips: {
-          backgroundColor: "rgb(255,255,255)",
-          bodyFontColor: "#858796",
           titleMarginBottom: 10,
           titleFontColor: '#6e707e',
           titleFontSize: 14,
+          backgroundColor: "rgb(255,255,255)",
+          bodyFontColor: "#858796",
           borderColor: '#dddfeb',
           borderWidth: 1,
           xPadding: 15,
           yPadding: 15,
           displayColors: false,
-          intersect: false,
-          mode: 'index',
           caretPadding: 10,
           callbacks: {
             label: function(tooltipItem, chart) {
-              var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || ' ';
+              var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
               return datasetLabel + ': ' + number_format(tooltipItem.yLabel);
             }
           }
-        }
+        },
       }
     });
-    myLineChart.render(); 
+    myBarChart.render(); 
   }
 });
 
-// Area Chart Example
+
+// Bar Chart Example
+

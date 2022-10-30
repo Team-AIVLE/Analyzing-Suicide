@@ -1,4 +1,6 @@
+import seaborn as sns
 import matplotlib.colors as mcolors
+
 from typing import List
 
 cmap = mcolors.get_named_colors_mapping()
@@ -23,3 +25,9 @@ def get_colors(color_num : int, base_color : List[str]):
     while len(base_color) < color_num:
         base_color += ["#%s" % int_to_hex_str(int(color[1:], 16) + COLOR_ADJUSTER).upper() for color in base_color[:color_num-len(base_color)]]
     return base_color
+
+
+def get_palette(n_colors, palette='crest'):
+    palette = sns.color_palette(palette, as_cmap=False, n_colors=n_colors)
+    return list(palette.as_hex())
+    
