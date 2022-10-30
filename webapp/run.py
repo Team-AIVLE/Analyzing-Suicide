@@ -48,8 +48,11 @@ def nocache(view):
 def root():
     # Count
     data_len = load_data()  
+    
+    total_path = list(iglob(pjoin(DATA_DIR, "*.csv")))
+    total_len = sum(list(map(lambda x: len(pd.read_csv(x)), total_path)))
         
-    return render_template("index.html", data_len=data_len)
+    return render_template("index.html", data_len=data_len, total_len=total_len)
 
 
 @app.route('/charts', methods=['GET', 'POST'])
@@ -67,10 +70,9 @@ def load_data():
     cur_dt = datetime.today()
     
     if cur_dt - last_dt >= timedelta(hours=1):
-        length = loc_db.update_dataset()
+        return loc_db.update_dataset()
     
-    print(length)
-    return length
+    return len(loc_db.cur_df)
     
 
 def load_keyword():
@@ -132,26 +134,38 @@ def get_data_len_by_region():
     return jsonify({'x_ticks': x_ticks, 'regions' : regions, 'counts' : counts, 'colors' : colors})
 
 
-def load_data_with_related_keyword():
+def load_data_with_related_keyword(keyword_type="recruit"):
     word_model = WordModel(data=loc_db.cur_df, model_dir=MODEL_DIR)
     
     data = pd.DataFrame()
-    data['category'] = ['동반자 모집', '판매/활용', '구체적 정보 제공', '판매/활용', '판매/활용']
-    data['id'] = [0, 1, 2, 3, 4]
+    if keyword_type == 'recruit':
+        
+        data['category'] = ['동반자 모집']
+        data['id'] = [0]
+        data['word'] = ['ㄷㅂㅈㅅ']
+        data['neighbors'] = [word_model.get_similar_words('ㄷㅂㅈㅅ')]
+        
+    elif keyword_type == 'sale':
+        
+        data['category'] = ['판매/활용', '판매/활용', '판매/활용']
+        data['id'] = [0, 1, 2]
 
-    data['word'] = ['ㄷㅂㅈㅅ','ㅈㅍㄷ', 'ㅂㄱㅌ','ㅅㅁㅈ','ㅅㅌㄴㅅ' ]
-    data['neighbors'] = [word_model.get_similar_words('ㄷㅂㅈㅅ'),
-                         word_model.get_similar_words('ㅈㅍㄷ'),
-                         word_model.get_similar_words('ㅂㄱㅌ'),
-                         word_model.get_similar_words('ㅅㅁㅈ'),
-                         word_model.get_similar_words('ㅅㅌㄴㅅ')
-                         ]
+        data['word'] = ['ㅈㅍㄷ', 'ㅅㅁㅈ','ㅅㅌㄴㅅ' ]
+        data['neighbors'] = [word_model.get_similar_words('ㅈㅍㄷ'),
+                            word_model.get_similar_words('ㅅㅁㅈ'),
+                            word_model.get_similar_words('ㅅㅌㄴㅅ')]
+    else:        
+        data['category'] = ['구체적 정보 제공']
+        data['id'] = [0]
+        data['word'] = ['ㅂㄱㅌ' ]
+        data['neighbors'] = [word_model.get_similar_words('ㅂㄱㅌ')]
+        
     return data
 
 @app.route('/api/related_sale', methods=['GET'])
 def get_related_words_with_sale():
     
-    data = load_data_with_related_keyword()
+    data = load_data_with_related_keyword(keyword_type='sale')
     
     nodes, edges = build_highlighted_graph(data, keywords=['ㅈㅍㄷ', 'ㅅㅁㅈ', 'ㅅㅌㄴㅅ'], logger=logger)    
     return jsonify({'nodes': nodes, 'edges' : edges})
@@ -160,7 +174,7 @@ def get_related_words_with_sale():
 @app.route('/api/related_info', methods=['GET'])
 def get_related_words_with_info():
     
-    data = load_data_with_related_keyword()
+    data = load_data_with_related_keyword(keyword_type='info')
     
     nodes, edges = build_highlighted_graph(data, keywords=['ㅂㄱㅌ'], logger=logger)
     return jsonify({'nodes': nodes, 'edges' : edges})
@@ -169,7 +183,7 @@ def get_related_words_with_info():
 @app.route('/api/related_recruit', methods=['GET'])
 def get_related_words_with_recruit():
     
-    data = load_data_with_related_keyword()
+    data = load_data_with_related_keyword(keyword_type='recruit')
 
     nodes, edges = build_highlighted_graph(data, keywords=['ㄷㅂㅈㅅ'], logger=logger)
     return jsonify({'nodes': nodes, 'edges' : edges})

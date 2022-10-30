@@ -22,7 +22,7 @@ class WordModel:
             self.model = Word2Vec.load(pjoin(model_dir, 'word2vec.model'))
         
     def get_similar_words(self, word, threshold=0.5):
-        related_word = list(filter(lambda x: x[-1] >= threshold, self.model.wv.most_similar(word)))
+        related_word = list(filter(lambda x: x[-1] >= threshold and x[0] != word, self.model.wv.most_similar(word)))
         return list(map(lambda x: x[0], related_word))
     
     def preprocessing(self, text):

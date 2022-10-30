@@ -12,6 +12,11 @@
     <script type="text/javascript" src="{{ url_for('static', filename='DataTables/datatables.min.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.slim.js" integrity="sha256-HwWONEZrpuoh951cQD1ov2HUK5zA5DwJ1DNUXaM6FsY=" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+
+    <script src="<c:url value='/js/jquery-3.5.1.min.js'/>" charset="utf-8"></script>
+    <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+
     <title>AIVLE-SP - Tables</title>
 
     <!-- Custom fonts for this template -->
@@ -290,8 +295,15 @@
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <h1 class="h3 mb-2 text-gray-800">Tables</h1>
-                    <p class="mb-4">원시 데이터 보여주기 (+ 개인정보 비식별화) </p>
+                    <h1 class="h3 mb-0 text-gray-800"><strong>원시 데이터</strong></h1>
+                    <br>
+
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <p class="mb-4">개인정보 비식별화한 원시 데이터</p>
+                        <a href="#" id="export" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" onclick="alert('신고 요청 되었습니다.');return false;"><i
+                            class="fas fa-download fa-sm text-white-50"></i> Export</a>
+                    </div>
+
 
                     <!-- DataTales Example -->
                     <div class="card shadow mb-4">
@@ -299,6 +311,20 @@
                             <h6 class="m-0 font-weight-bold text-primary"></h6>
                         </div>
                         <div class="card-body">
+                            <style TYPE="text/css">
+                                table {font-size: 12pt;}
+                            </style>
+                            <table id="myTable", class="display" style="width:100%">
+                                <thead>
+                                    <tr>
+                                        <th style="width:50%">Text</th>
+                                        <th style="width:30%">URL</th>
+                                        <th style="width:5%">Keyword</th>
+                                        <th style="width:15%">Date</th>
+                                    </tr>
+                                </thead>
+                            </table>
+
                             <script type="text/javascript">
                                 function setTable() {
                                     $(document).ready(function (){
@@ -315,26 +341,17 @@
                                                 {"data": "Keyword"},
                                                 {"data": "Timestamp"},
                                             ]
+
                                         });
                                     });
+                                    
+
+
                                 }
                                 $(window).on("load", setTable);                                
                             </script>
 
-                            <style TYPE="text/css">
-                                table {font-size: 12pt;}
-                            </style>
-                            <table id="myTable", class="display" style="width:100%">
-                                <thead>
-                                    <tr>
-                                        <th style="width:50%">Text</th>
-                                        <th style="width:30%">URL</th>
-                                        <th style="width:5%">Keyword</th>
-                                        <th style="width:15%">Date</th>
-                                    </tr>
-                                </thead>
-                            </table>
-
+                            
                         </div>
                         
                     </div>
