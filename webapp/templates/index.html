@@ -8,6 +8,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
+    <script src="lib/bindings/utils.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+    crossorigin="anonymous"
+    />
+    <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+    crossorigin="anonymous"
+    ></script>
 
     <title>AIVLE-SP</title>
 
@@ -514,22 +529,37 @@
                                         
                                     </div>
 
+                                    <style type="text/css">
+                                        #recruit_related_network,
+                                        #info_related_network,
+                                        #sale_related_network {
+                                            width: 100%;
+                                            height: 500px;
+                                            background-color: #ffffff;
+                                            border: 1px solid lightgray;
+                                            position: relative;
+                                            float: left;
+                                        }
+                                   </style>
+
                                     <!-- Tab content -->
                                     <div id="Recruit" class="tabcontent">                                        
-                                        <iframe 
-                                        src="{{ url_for('static', filename='frame/recruit.html') }}" class="embed-responsive iframe" height="500px" scrolling="no" frameborder="0"></iframe>
-                                      
+                                        <div class="card" style="width: 100%">
+                                            <div id="recruit_related_network"></div>
+                                        </div>
                                      
                                     </div>
                                     
                                     <div id="Sale" class="tabcontent">
-                                        <iframe 
-                                        src="{{ url_for('static', filename='frame/sale.html') }}" class="embed-responsive iframe" height="500px" scrolling="no" frameborder="0"></iframe>
+                                        <div class="card" style="width: 100%">
+                                            <div id="sale_related_network"></div>
+                                        </div>
                                     </div>
                                     
                                     <div id="Info" class="tabcontent">
-                                        <iframe 
-                                        src="{{ url_for('static', filename='frame/info.html') }}" class="embed-responsive iframe" height="500px" scrolling="no" frameborder="0"></iframe>
+                                        <div class="card" style="width: 100%">
+                                            <div id="info_related_network"></div>
+                                        </div>
                                     </div>
 
                                 </div>
@@ -620,7 +650,10 @@
     <!-- Page level custom scripts -->
     <script src="{{ url_for('static', filename='js/demo/chart-area-demo.js') }}"></script>
     <script src="{{ url_for('static', filename='js/demo/chart-bar-demo.js') }}"></script>
-
+    <script src="{{ url_for('static', filename='js/demo/chart-sale-demo.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/demo/chart-info-demo.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/demo/chart-recruit-demo.js') }}"></script>
+    
     <script src="{{ url_for('static', filename='bower_components/jqcloud2/dist/jqcloud.min.js') }}"></script>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='bower_components/jqcloud2/dist/jqcloud.min.css') }}">

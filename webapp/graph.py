@@ -9,36 +9,36 @@ import networkx as nx
 import pandas as pd
 
 UNK_ = '기타'
-ENTIRE_NODE_SIZE = 10
+ENTIRE_NODE_SIZE = 15
 NEI_NODE_SIZE = 20
 KEY_NODE_SIZE = 25
 
 KEY_BORDER_SIZE = 4
 
-ENTIRE_NODE_COLOR = "#3FAFCD"
-ENTIRE_BORDER_COLOR = "#20BFE9"
-ENTIRE_HOVER_COLOR= "#77C7DC"
+ENTIRE_NODE_COLOR = "#92E5B1"
+ENTIRE_BORDER_COLOR = "#8FCDA6"
+ENTIRE_HOVER_COLOR= "#8FCDA6"
 
-NEI_NODE_COLOR = "#61EED0"
-NEI_BORDER_COLOR = "#6ECDB9"
-NEI_HOVER_COLOR= "#55CBB2"
+NEI_NODE_COLOR = "#C2ED9E"
+NEI_BORDER_COLOR = "#A9E17A"
+NEI_HOVER_COLOR= "#A9E17A"
 
-KEY_NODE_COLOR = "#61EED0"
-KEY_BORDER_COLOR = "#F2EF38"
-KEY_HOVER_COLOR= "#F9F671"
+KEY_NODE_COLOR = "#FF8787"
+KEY_BORDER_COLOR = "#F96969"
+KEY_HOVER_COLOR= "#F96969"
 
 
-ENTIRE_EDGE_WIDTH = 2
-KEY_EDGE_WIDTH = 4
+ENTIRE_EDGE_WIDTH = 5
+KEY_EDGE_WIDTH = 15
 
 ENTIRE_EDGE_COLOR = "#B8B8B8"
-KEY_EDGE_COLOR = "#F2C100"
+KEY_EDGE_COLOR = "#F8C4B4"
 
 
-ENTIRE_LABEL = { 'color': "#797979", 'size': 8, 'face': "arial", 
+ENTIRE_LABEL = { 'color': "#797979", 'size': 10, 'face': "arial", 
   'background': "none", 'strokeWidth': 0, 'strokeColor': "#ffffff", 'align': "center" }
 
-NEIGHBOR_LABEL = { 'color': "#383838", 'size': 12, 'face': "arial", 
+NEIGHBOR_LABEL = { 'color': "#383838", 'size': 13, 'face': "arial", 
   'background': "none", 'strokeWidth': 0, 'strokeColor': "#ffffff", 'align': "center" }
 
 KEY_LABEL = { 'color': "#383838", 'size': 20, 'face': "arial", 
@@ -135,30 +135,33 @@ def highlighting_keywords(graph : nx.Graph, keywords : List[str], data : pd.Data
     
     def _update_node(graph, cur_node, node_type='basic', **kwargs):
         if node_type == 'basic':
-            prev_rgb = getcolor(graph.nodes[cur_node]['color'], "RGB")
-
-            html_cd = _adjust_color(prev_rgb)
-            graph.nodes[cur_node].update({'color' : html_cd, 'size' : ENTIRE_NODE_SIZE, 'font' : ENTIRE_LABEL})
+            graph.nodes[cur_node].update({'color' : {'border' : ENTIRE_BORDER_COLOR, 
+                                                    'background' : ENTIRE_NODE_COLOR,
+                                                    'highlight': {'border' : ENTIRE_BORDER_COLOR, 'background' : ENTIRE_HOVER_COLOR },
+                                                    'hover' : {'border' : ENTIRE_BORDER_COLOR, 'background' : ENTIRE_HOVER_COLOR }}, 
+                                            'size' : ENTIRE_NODE_SIZE, 'font' : ENTIRE_LABEL})
         elif node_type == 'key':
-            cur_color = graph.nodes[cur_node]['color']
-            graph.nodes[cur_node].update({'size' : kwargs['node_size'], 
-                                            'color' : {'border' : KEY_BORDER_COLOR, 'background':cur_color, 
+            graph.nodes[cur_node].update({'size' : KEY_NODE_SIZE, 
+                                            'color' : {'border' : KEY_BORDER_COLOR, 
+                                                       'background' : KEY_NODE_COLOR,
                                                        'highlight': {'border' : KEY_BORDER_COLOR, 'background' : KEY_HOVER_COLOR },
                                                        'hover' : {'border' : KEY_BORDER_COLOR, 'background' : KEY_HOVER_COLOR }},
                                             'borderWidth': kwargs['borderwidth'],
                                             'font' : KEY_LABEL,
                                             'labelHighlightBold' : 0})
         else:
-            graph.nodes[cur_node].update({'size' : kwargs['node_size'], 'font' : NEIGHBOR_LABEL})
+            graph.nodes[cur_node].update({'size' : NEI_NODE_SIZE, 
+                                            'color' : {'border' : NEI_BORDER_COLOR, 
+                                                       'background' : NEI_NODE_COLOR,
+                                                       'highlight': {'border' : NEI_BORDER_COLOR, 'background' : NEI_HOVER_COLOR },
+                                                       'hover' : {'border' : NEI_BORDER_COLOR, 'background' : KEY_HOVER_COLOR }},
+                                            'font' : NEIGHBOR_LABEL,
+                                            'labelHighlightBold' : 0})
         return
     
     def _update_edge(graph, cur_edge, edge_type='basic', **kwargs):
         if edge_type == 'basic':
-            edge_conf = graph.edges[cur_edge]
-            prev_rgb = getcolor(edge_conf['color'], "RGB")
-
-            html_cd = _adjust_color(prev_rgb)
-            graph.edges[cur_edge].update({'color' : html_cd, 'width' : ENTIRE_EDGE_WIDTH})
+            graph.edges[cur_edge].update({'color' : ENTIRE_EDGE_COLOR, 'width' : ENTIRE_EDGE_WIDTH})
         else:
             graph.edges[cur_edge].update({'width' : kwargs['edge_width'], 'color' : kwargs['edge_color']})
         return
@@ -172,19 +175,19 @@ def highlighting_keywords(graph : nx.Graph, keywords : List[str], data : pd.Data
     
     return graph
 
-def build_highlighted_graph(data : pd.DataFrame, keywords : List[str]):
-    graph = build_graph(data)
+def build_highlighted_graph(data : pd.DataFrame, keywords : List[str], logger : Logger):
+    graph = build_graph(data, logger=logger)
     groups = list(set(data.category.tolist()))
 
     group_colors = get_colors(len(groups), colors)
     configure_graph_option(graph, node_conf={'size':ENTIRE_NODE_SIZE}, edge_conf={'width':ENTIRE_EDGE_WIDTH, 'color': ENTIRE_EDGE_COLOR})
     for g, c in zip(groups, group_colors):
         labels = data[data.category == g].word.tolist()
-        node_ids = [find_nodeid(data, label) for label in labels]
+        node_ids = [find_nodeid(data, label, logger=logger) for label in labels]
         configure_group(graph, node_list = node_ids,
                             node_conf={'color': c})
         
-    h_graph = highlighting_keywords(graph, keywords, data, alpha='AA', color_adjust=50)
+    h_graph = highlighting_keywords(graph, keywords, data, alpha='AA', logger=logger, color_adjust=50)
     
     nt = Network()
     nt.from_nx(h_graph)

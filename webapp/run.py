@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 from glob import iglob
 from os.path import join as pjoin
@@ -16,14 +17,18 @@ from extract_noun import get_nouns
 from typing import List
 from functools import reduce
 from collections import Counter, OrderedDict
-import numpy as np
 from ast import literal_eval
+from log import Logger
+
 app = Flask(__name__, template_folder='templates')
 app.config['UPLOAD_FOLDER'] = "static"
 
 DATA_DIR = pjoin("static", "data")
 CONFIG_PATH = "config/"
 loc_db = locDBHandler(CONFIG_PATH, DATA_DIR)
+
+
+logger = Logger('api-log', './log/')
 
 # Remove Cache
 def nocache(view):
@@ -85,11 +90,8 @@ def load_keyword():
     temp = pd.read_csv(pjoin("static/data", "221027-0000_528.csv"), converters={
         "noum" : literal_eval
     })
-    
-    # loc_db.cur_df['noum'] = loc_db.cur_df['noum'].apply(lambda x: literal_eval(x))
     keywords = temp['noum'].tolist()
     keywords = reduce(lambda x, y: x + y, keywords)
-    #print(keywords)
     
     keywords = Counter(keywords)
     x=OrderedDict(keywords.most_common())
@@ -114,9 +116,20 @@ def get_keyword_counts():
     labels = [k for k in keywords.keys()][0:10]
     values = [k for k in keywords.values()][0:10]
     
-    max_values = (max(values) // 1000 + 1) * 1000
+    max_values = (max(values) // 100 + 1) * 100
     return jsonify({'labels': labels, 'values' : values, 'max_values' : max_values})
 
+
+
+def load_data_with_related_keyword():
+    data = pd.DataFrame()
+    data['category'] = ['동반자 모집', '구체적 정보 제공', '구체적 정보 제공']
+    data['id'] = [0, 1, 2]
+
+    data['word'] = ['ㄷㅂㅈㅅ','ㅊㅅㄱㄹ', '끈' ]
+    data['neighbors'] = [['여성', '끈'],['약물', '모텔'], ['도박']]
+    
+    return data
 
 @app.route('/api/data_len_by_region', methods=['GET'])
 def get_data_len_by_region():
@@ -139,14 +152,28 @@ def get_data_len_by_region():
 @app.route('/api/related_sale', methods=['GET'])
 def get_related_words_with_sale():
     
-    data = pd.DataFrame()
-    data['category'] = ['동반자 모집', '구체적 정보 제공']
-    data['id'] = [0, 1]
-
-    data['word'] = ['ㄷㅂㅈㅅ','ㅊㅅㄱㄹ' ]
-    data['neighbors'] = [['여성', '끈'],['약물', '모텔']]
+    data = load_data_with_related_keyword()
     
-    nodes, edges = build_highlighted_graph(data, keywords=['ㅊㅅㄱㄹ'])
+    nodes, edges = build_highlighted_graph(data, keywords=['ㅊㅅㄱㄹ'], logger=logger)
+    return jsonify({'nodes': nodes, 'edges' : edges})
+
+
+@app.route('/api/related_info', methods=['GET'])
+def get_related_words_with_info():
+    
+    data = load_data_with_related_keyword()
+    
+    nodes, edges = build_highlighted_graph(data, keywords=['끈'], logger=logger)
+    return jsonify({'nodes': nodes, 'edges' : edges})
+
+
+@app.route('/api/related_recruit', methods=['GET'])
+def get_related_words_with_recruit():
+    
+    data = load_data_with_related_keyword()
+
+    
+    nodes, edges = build_highlighted_graph(data, keywords=['ㄷㅂㅈㅅ'], logger=logger)
     return jsonify({'nodes': nodes, 'edges' : edges})
 
 
