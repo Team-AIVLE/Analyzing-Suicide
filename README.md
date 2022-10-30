@@ -8,7 +8,7 @@
     - `config/` 내에 keyfile 저장
 
 
-2. 커맨드 실행
+2. command 실행
     ```
     python run.py
     ```
