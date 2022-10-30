@@ -20,6 +20,10 @@ from collections import Counter, OrderedDict
 from ast import literal_eval
 from log import Logger
 
+from soynlp.tokenizer import RegexTokenizer
+import re
+from gensim.models import word2vec
+
 app = Flask(__name__, template_folder='templates')
 app.config['UPLOAD_FOLDER'] = "static"
 
@@ -119,15 +123,32 @@ def get_keyword_counts():
     max_values = (max(values) // 100 + 1) * 100
     return jsonify({'labels': labels, 'values' : values, 'max_values' : max_values})
 
-
+def preprocessing(text):
+    # 개행문자 제거
+    text = re.sub('\\\\n', ' ', text)
+    # # 한글만 남기고 모두 제거
+    text = re.sub('[^가-힣ㄱ-ㅎㅏ-ㅣ]', ' ', text)
+    return text
 
 def load_data_with_related_keyword():
+    tokenizer = RegexTokenizer()
+    text=loc_db.cur_df['text'].apply(preprocessing)
+    tokens = text.apply(tokenizer.tokenize)
+    model = word2vec.Word2Vec(tokens, min_count=10)
+    sim=model.wv.most_similar('ㅂㄱㅌ')
+    
+    
     data = pd.DataFrame()
-    data['category'] = ['동반자 모집', '구체적 정보 제공', '구체적 정보 제공']
-    data['id'] = [0, 1, 2]
+    data['category'] = ['동반자 모집', '판매/활용', '구체적 정보 제공', '판매/활용', '판매/활용']
+    data['id'] = [0, 1, 2, 3, 4]
 
-    data['word'] = ['ㄷㅂㅈㅅ','ㅊㅅㄱㄹ', '끈' ]
-    data['neighbors'] = [['여성', '끈'],['약물', '모텔'], ['도박']]
+    data['word'] = ['ㄷㅂㅈㅅ','ㅈㅍㄷ', 'ㅂㄱㅌ','ㅅㅁㅈ','ㅅㅌㄴㅅ' ]
+    data['neighbors'] = [[model.wv.most_similar('ㄷㅂㅈㅅ')[i][0] for i in range(len(model.wv.most_similar('ㄷㅂㅈㅅ')))],
+                         [model.wv.most_similar('ㅈㅍㄷ')[i][0] for i in range(len(model.wv.most_similar('ㅈㅍㄷ')))],
+                         [model.wv.most_similar('ㅂㄱㅌ')[i][0] for i in range(len(model.wv.most_similar('ㅂㄱㅌ')))],
+                         [model.wv.most_similar('ㅅㅁㅈ')[i][0] for i in range(len(model.wv.most_similar('ㅅㅁㅈ')))],
+                         [model.wv.most_similar('ㅅㅌㄴㅅ')[i][0] for i in range(len(model.wv.most_similar('ㅅㅌㄴㅅ')))]
+                         ]
     
     return data
 
@@ -154,7 +175,7 @@ def get_related_words_with_sale():
     
     data = load_data_with_related_keyword()
     
-    nodes, edges = build_highlighted_graph(data, keywords=['ㅊㅅㄱㄹ'], logger=logger)
+    nodes, edges = build_highlighted_graph(data, keywords=['ㅈㅍㄷ', 'ㅅㅁㅈ', 'ㅅㅌㄴㅅ'], logger=logger)
     return jsonify({'nodes': nodes, 'edges' : edges})
 
 
@@ -163,7 +184,7 @@ def get_related_words_with_info():
     
     data = load_data_with_related_keyword()
     
-    nodes, edges = build_highlighted_graph(data, keywords=['끈'], logger=logger)
+    nodes, edges = build_highlighted_graph(data, keywords=['ㅂㄱㅌ'], logger=logger)
     return jsonify({'nodes': nodes, 'edges' : edges})
 
 
