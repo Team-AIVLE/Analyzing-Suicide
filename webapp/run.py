@@ -13,6 +13,11 @@ from datetime import date, datetime, timedelta
 from db_handler import dbHandler, locDBHandler
 from extract_noun import get_nouns
 
+import numpy as np
+from ast import literal_eval
+import urllib3
+from collections import Counter, OrderedDict
+
 app = Flask(__name__, template_folder='templates')
 app.config['UPLOAD_FOLDER'] = "static"
 
@@ -77,15 +82,23 @@ def set_region():
     return
 
 def load_keyword():
-    keywords = {
-        "ㄷㅂㅈㅅ" : 3333,
-        "ㅈㅅㅇ" : 3145,
-        "ㅂㄱㅌ" : 1564,
-        "ㅊㅅㄱㄹ" : 1450,
-        "끈" : 667,
-        "ㅁㅌ" : 99,
-        "청주" : 10
-    }
+    
+    keywords=loc_db.cur_df['search_keyword'].value_counts()
+    keywords=keywords.astype(np.int32)
+    keywords=dict(keywords)
+    keywords={k:int(v) for k,v in keywords.items()}
+    text = []
+    text = loc_db.cur_df['text'].values
+    morp = []
+    for i in range(len(loc_db.cur_df)):
+        noun = get_nouns(text[i])
+        morp += noun
+        
+    keywords=Counter(morp)
+    x=OrderedDict(keywords.most_common())
+    keywords=dict(x)
+    keywords={key:value for key, value in keywords.items() if value >= 10}
+    
     return keywords
 
 @app.route('/api/keyword_weights', methods=['GET'])
@@ -93,7 +106,7 @@ def get_keyword_weights():
     keywords = load_keyword()
     
     labels = list(map(lambda x: x[0], keywords.items()))
-    weight = [16.5, 15.5, 15, 14.5, 9.67, 6.9, 5]
+    weight = list(map(lambda x: x[-1], keywords.items()))
     words = [{"key" : l, "weight" : w} for l, w in zip(labels, weight)]
     
     return jsonify({'words': words})
@@ -102,10 +115,10 @@ def get_keyword_weights():
 @app.route('/api/keyword_counts', methods=['GET'])
 def get_keyword_counts():
     keywords = load_keyword()
-    labels = list(map(lambda x: x[0], keywords.items()))
-    values = list(map(lambda x: x[-1], keywords.items()))
+    labels = list(map(lambda x: x[0], keywords.items()))[0:10]
+    values = list(map(lambda x: x[-1], keywords.items()))[0:10]
     
-    max_values = (max(values) // 1000 + 1) * 1000
+    max_values = (max(values) // 500 + 1) * 500
     return jsonify({'labels': labels, 'values' : values, 'max_values' : max_values})
 
 
