@@ -1,3 +1,4 @@
+import json, re
 import pandas as pd
 import seaborn as sns
 from glob import iglob
@@ -172,6 +173,34 @@ def get_related_words_with_recruit():
 
     nodes, edges = build_highlighted_graph(data, keywords=['ㄷㅂㅈㅅ'], logger=logger)
     return jsonify({'nodes': nodes, 'edges' : edges})
+
+
+def time_formatting(x):
+    h, m, s = map(int, x.split(":"))
+    return "%02d:%02d:%02d" % (h, m, s)
+
+def del_nickname(x):
+    return re.sub("@[a-zA-Z0-9_-]+", " ", x).strip()
+    
+    
+@app.route('/api/raw_data', methods=['GET'])
+def get_raw_data():    
+    elements = loc_db.cur_df[['text', 'url', 'date', 'time', 'search_keyword']]
+    elements['time'] = elements['time'].apply(time_formatting)
+    elements['text'] = elements['text'].apply(del_nickname)
+    
+    elements['Timestamp'] = list(map(lambda x: f"{x[0]} {x[1]}", zip(elements['date'], elements['time'])))
+    elements.drop(columns=['date', 'time'], inplace=True)
+    
+    elements.rename(columns={
+        'text' : "Text",
+        'url' : "URL",
+        'search_keyword' : "Keyword",
+    }, inplace=True)
+
+    elements_json = elements.to_json(orient='records')
+    
+    return jsonify({'data': json.loads(elements_json)})
 
 
 if __name__ == '__main__':
