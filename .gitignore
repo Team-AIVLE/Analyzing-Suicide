@@ -1,2 +1,5 @@
+webapp/static/data/*
+webapp/log/*
 webapp/config/*.json
 */__pycache__
+*/*/__pycache__
