@@ -76,7 +76,8 @@ def load_data():
     
 
 def load_keyword():
-    temp = pd.read_csv(pjoin(DATA_DIR, "221027-0000_528.csv"), converters={
+    
+    temp = pd.read_csv(list(iglob(pjoin(DATA_DIR, "*.csv")))[-1], converters={
         "noum" : literal_eval
     })
     keywords = temp['noum'].tolist()
