@@ -7,15 +7,19 @@
     - `config/config.json` : database url 및 keyfile 명 작성
     - `config/` 내에 keyfile 저장
 
+2. webapp 경로로 이동
 
-2. command 실행
+3. command 실행
     ```
     python run.py
     ```
 
 
-### **22.10.28 웹 페이지 구성**
+### **requirements**
 
-![](img/web_1.PNG)
-![](img/web_2.PNG)
-
+```
+flask
+pyvis
+soynlp
+gensim
+```
