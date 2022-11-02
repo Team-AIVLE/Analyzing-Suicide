@@ -1,0 +1,4 @@
+flask
+pyvis
+soynlp
+gensim
