@@ -42,7 +42,7 @@
 
 ## **데모 영상**
 
-<img src="img/demo_video.jpg" href="https://youtu.be/kJBbrBxTVV0" alt="drawing" width="600"/>
+[<img alt="데모 영상" width="600" src="img/demo_video.jpg" />](https://youtu.be/kJBbrBxTVV0)
 
 
 <br>
