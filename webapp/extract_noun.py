@@ -2,10 +2,8 @@ import urllib3
 import json
 
 MORP_API_URL = "http://aiopen.etri.re.kr:8000/WiseNLU_spoken"
-API_KEY = "6356b2a3-f44a-4a46-a272-6e8d37ea3ee4"
-# 6356b2a3-f44a-4a46-a272-6e8d37ea3ee4
-# dfa22cfa-a768-4815-9f9f-3af09edb5a76
-# 1f4010f5-0164-4715-a6de-a763cffc3165
+API_KEY = ""
+
 def get_nouns(text):
     http = urllib3.PoolManager()
     requestJson = {
